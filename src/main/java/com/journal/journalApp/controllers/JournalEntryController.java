@@ -4,6 +4,8 @@ import com.journal.journalApp.entity.JournalEntry;
 import com.journal.journalApp.service.JournalEntryService;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -21,16 +23,26 @@ public class JournalEntryController {
         return journalEntryService.getEntries();
     }
 
+    // RespnseEntity helps in implementing the HTTP request codes in the codebase and API logs.
+
     @PostMapping("/create-entry")
-    public JournalEntry createEntry(@RequestBody JournalEntry journalEntry){
-        journalEntry.setDate(LocalDateTime.now());
-        journalEntryService.saveEntry(journalEntry);
-        return journalEntry;
+    public ResponseEntity<JournalEntry> createEntry(@RequestBody JournalEntry journalEntry){
+        try{
+            journalEntry.setDate(LocalDateTime.now());
+            journalEntryService.saveEntry(journalEntry);
+            return new ResponseEntity<>(HttpStatus.CREATED);
+        } catch(Exception ex){
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
     }
 
     @GetMapping("id/{myId}")
-    public JournalEntry getEntry(@PathVariable ObjectId myId){
-        return journalEntryService.getEntryById(myId);
+    public ResponseEntity<JournalEntry> getEntry(@PathVariable ObjectId myId){
+        JournalEntry journalEntry = journalEntryService.getEntryById(myId);
+        if(journalEntry != null){
+            return new ResponseEntity<>(journalEntry, HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
     @DeleteMapping("id/{myId}")
